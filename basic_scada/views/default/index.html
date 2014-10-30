@@ -1,0 +1,200 @@
+
+
+
+{{extend 'layout.html'}}
+<html>
+	<body>
+		<img id="bombilla" src="Bombilla.svg.png">
+	
+	</body>
+
+
+
+</html>
+
+
+
+    
+
+
+
+
+
+
+
+
+<script language="javascript">
+
+
+
+
+    
+
+	/*Cada vez que clickamos en boton abrir hacemos un post para mandar datos a arduino, escribiendolos en un txt desde el controlador*/
+  function open_door(){
+	    var estado={'entrada': 1, 'salida': 0 };
+	    jQuery.post("{{=URL('default','abrir_puerta.json')}}", estado, {contentType: 'application/json'} )
+			    .success(function(datos_recibidos) {           
+                  console.log("Post realizado bien");
+				  })
+				 .fail(function(datos_recibidos){
+				  console.log("Post realizado mal");
+					 });
+  };
+  
+  /*Esta funcion es similar al anterior pero con la finalidad de cerrar la puerta, es decir, apagar el PIN de arduino*/
+  function close_door(){
+	    var estado={'cierre': 1 };
+	    jQuery.post("{{=URL('default','cerrar_puerta.json')}}", estado, {contentType: 'application/json'} )
+			    .success(function(datos_recibidos) {           
+                  console.log("Post realizado bien");
+				  })
+				 .fail(function(datos_recibidos){
+				  console.log("Post realizado mal");
+					 });
+  };
+
+
+  jQuery(document).ready(function() {
+
+      var temp;
+      var paper = Raphael(0, 0, 1500,600);
+	  var estado2={'estado_ant': 0}	
+
+		/*Temporizador que realiza posts constantemente para recoger los datos que vienen de arduino */
+		
+      temp2=window.setInterval(function(){
+		  jQuery.post("{{=URL('default','recogida_datos.json')}}", estado2, {contentType: 'application/json'} )
+			    .success(function(datos_recibidos) {
+					
+					/*Si llega 1500 no debemos de hacer nada ya que quiere decir que se ha leido el txt en mal momento*/
+					
+					if(datos_recibidos["valores"]<1500){
+						mercurio.animate({height:(datos_recibidos["valores"]/6.82)+50, y: 300-(datos_recibidos["valores"]/6.82)},1000);
+						}
+					
+					
+					
+				  	if (datos_recibidos["on"]==0){
+
+						light.attr({fill : "yellow"})
+						}
+				  	if (datos_recibidos["on"]==2){
+
+						light.attr({fill : "black"})
+						}
+					
+				})	
+		  },500);					 		  
+		  
+	  paper.canvas.style.backgroundColor = "grey"
+	  
+	  var rect = paper.rect(300,100,30,55)
+		.attr({
+			fill : "black",
+			stroke : "none"
+			})
+			
+	  var light=paper.circle(315,165,30,30)
+		.attr({
+			fill : "yellow",
+			"stroke-width" : 5
+			})
+
+
+			
+	  paper.rect(580,150,40,200)
+		.attr({
+			fill : "grey",
+			"stroke-width" : 5 
+			})
+			
+	  paper.circle(600,350,40,40)
+		.attr({
+			fill : "red",
+			"stroke-width" : 5
+			})
+			
+	  mercurio = paper.rect(580,300,40,50)
+		.attr({
+			fill : "red",
+			stroke : "none"
+			})
+
+			
+	  paper.text(320,220,"Iluminación")
+		.attr({
+			"font-size" : 18,
+			"font-family" : "Georgia"
+			})
+			
+	  paper.text(600,410,"Temperatura")
+		.attr({
+			"font-size" : 18,
+			"font-family" : "Georgia"
+			})
+			
+	  paper.rect(860,100,40,70)
+		.attr({
+			fill : "black",
+			stroke : "none"
+			})
+			
+	  paper.rect(860,350,40,70)
+		.attr({
+			fill : "black",
+			stroke : "none"
+			})
+			
+	  var puerta = paper.rect(860,170,40,190)
+		.attr({
+			fill : "brown",
+			"stroke-width" : 5 
+			})
+			
+	  paper.text(880,450,"Entrada")
+		.attr({
+			"font-size" : 18,
+			"font-family" : "Georgia"
+			})
+			
+	 var abrir = paper.rect(960,180,90,70)
+		.attr({
+			fill : "green",
+			"stroke-width" : 2 
+			})
+		.click(function(){
+			this.attr({fill : "black"}),puerta.animate({height:20},3000)
+			cerrar.attr({fill : "red"})
+			open_door();
+			})
+			
+	  var cerrar = paper.rect(960,300,90,70)
+		.attr({
+			fill : "black",
+			"stroke-width" : 2 
+			})
+		.click(function(){
+			this.attr({fill : "black"}),puerta.animate({height:190},3000)
+			abrir.attr({fill : "green"})
+			close_door();
+			})
+			
+	  paper.text(1002,215,"ABRIR")
+		.attr({
+			"font-size" : 14,
+			"font-family" : "Arial"
+
+			})
+			
+	  paper.text(1005,335,"CERRAR")
+		.attr({
+			"font-size" : 14,
+			"font-family" : "Arial"
+			})									
+	
+});
+
+
+
+</script>
